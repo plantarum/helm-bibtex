@@ -91,8 +91,9 @@
   "Prepare bib entry CANDIDATE for display."
   (let* ((width (1- (frame-width)))
          (idx (get-text-property 0 'idx candidate))
-         (entry (cdr (nth idx (ivy-state-collection ivy-last)))))
-    (bibtex-completion-format-entry entry width)))
+         (entry (cdr (nth idx (ivy-state-collection ivy-last))))
+         (marked (member candidate ivy-marked-candidates)))
+    (bibtex-completion-format-entry-ivy entry width marked)))
 
 (defmacro ivy-bibtex-ivify-action (action name)
   "Wraps the function ACTION in another function named NAME which extracts the key from the candidate selected in ivy and passes it to ACTION."

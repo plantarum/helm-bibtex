@@ -850,6 +850,43 @@ find a PDF file."
                         :key 'car :from-end t))
 
 
+(defun bibtex-completion-format-entry-ivy (entry width marked)
+  "Formats a BibTeX ENTRY for display in results list.
+WIDTH is the width of the results list.  The display format is
+governed by the variable `bibtex-completion-display-formats'."
+  (let* ((format
+          (or (assoc-string (bibtex-completion-get-value "=type=" entry)
+                            bibtex-completion-display-formats-internal
+                            'case-fold)
+              (assoc t bibtex-completion-display-formats-internal)))
+         (format-string (cadr format)))
+    (concat (if marked ivy-mark-prefix " ")
+            (s-format
+             format-string
+             (lambda (field)
+               (let* ((field (split-string field ":"))
+                      (field-name (car field))
+                      (field-width (cadr field))
+                      (field-value (bibtex-completion-get-value field-name entry)))
+                 (when (and (string= field-name "author")
+                            (not field-value))
+                   (setq field-value (bibtex-completion-get-value "editor" entry)))
+                 (when (and (string= field-name "year")
+                            (not field-value))
+                   (setq field-value (car (split-string (bibtex-completion-get-value "date" entry "") "-"))))
+                 (setq field-value (bibtex-completion-clean-string (or field-value " ")))
+                 (when (member field-name '("author" "editor"))
+                   (setq field-value (bibtex-completion-shorten-authors field-value)))
+                 (if (not field-width)
+                     field-value
+                   (setq field-width (string-to-number field-width))
+                   (truncate-string-to-width
+                    field-value
+                    (if (> field-width 0)
+                        field-width
+                      (- width (cddr format)))
+                    0 ?\s))))))))
+
 (defun bibtex-completion-format-entry (entry width)
   "Formats a BibTeX ENTRY for display in results list.
 WIDTH is the width of the results list.  The display format is
