@@ -153,6 +153,38 @@ from the local bibliography.  This is set internally by
               :history 'ivy-bibtex-history
               :action ivy-bibtex-default-action)))
 
+(defun tws-ivy-bibtex-citation (&optional arg local-bib)
+  "Search BibTeX entries using ivy. Modified to default to inserting
+citations, and support multiple selections.
+
+With a prefix ARG the cache is invalidated and the bibliography
+reread.
+
+If LOCAL-BIB is non-nil, display that the BibTeX entries are read
+from the local bibliography.  This is set internally by
+`ivy-bibtex-with-local-bibliography'."
+  (interactive "P")
+  (when arg
+    (bibtex-completion-clear-cache))
+  (bibtex-completion-init)
+  (let* ((candidates (bibtex-completion-candidates))
+         (key (bibtex-completion-key-at-point))
+         (preselect (and key
+                         (cl-position-if (lambda (cand)
+                                           (member (cons "=key=" key)
+                                                   (cdr cand)))
+                                         candidates)))
+         (KEYS))
+    (ivy-read (format "BibTeX entries%s: " (if local-bib " (local)" ""))
+              candidates
+              :preselect preselect
+              :caller 'ivy-bibtex
+              :history 'ivy-bibtex-history
+              :action #'(lambda (x)
+                          (add-to-list 'KEYS (cdr (assoc "=key=" (cdr
+                                                                  x))))))
+    (bibtex-completion-insert-citation KEYS)))
+
 ;;;###autoload
 (defun ivy-bibtex-with-local-bibliography (&optional arg)
   "Search BibTeX entries with local bibliography.
